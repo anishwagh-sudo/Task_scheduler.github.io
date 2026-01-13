@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Task Scheduler</title>
+
+<style>
+:root{
+    --bg:#020617;
+    --card:#020617;
+    --accent:#2563eb;
+    --text:#e5e7eb;
+    --muted:#94a3b8;
+    --high:#ef4444;
+    --medium:#f59e0b;
+    --low:#22c55e;
+}
+
+body{
+    margin:0;
+    font-family:Segoe UI, sans-serif;
+    background:var(--bg);
+    color:var(--text);
+}
+
+header{
+    text-align:center;
+    padding:25px;
+    border-bottom:1px solid #020617;
+}
+
+header h1{
+    margin:0;
+    color:#60a5fa;
+}
+
+.container{
+    max-width:750px;
+    margin:30px auto;
+    background:var(--card);
+    padding:25px;
+    border-radius:14px;
+    box-shadow:0 0 25px rgba(37,99,235,0.25);
+}
+
+input, select, button{
+    width:100%;
+    padding:12px;
+    margin:8px 0;
+    border-radius:8px;
+    border:none;
+    font-size:14px;
+}
+
+input, select{
+    background:#020617;
+    color:var(--text);
+    border:1px solid #020617;
+}
+
+button{
+    background:var(--accent);
+    color:white;
+    cursor:pointer;
+}
+
+button:hover{
+    background:#1d4ed8;
+}
+
+.stats{
+    display:flex;
+    justify-content:space-between;
+    margin:15px 0;
+    color:var(--muted);
+}
+
+.task{
+    background:#020617;
+    padding:15px;
+    border-radius:10px;
+    margin-top:12px;
+    border-left:5px solid var(--accent);
+}
+
+.task.completed{
+    opacity:0.6;
+    text-decoration:line-through;
+}
+
+.priority-high{border-color:var(--high);}
+.priority-medium{border-color:var(--medium);}
+.priority-low{border-color:var(--low);}
+
+.task-buttons{
+    display:flex;
+    gap:10px;
+    margin-top:10px;
+}
+
+.task-buttons button{
+    flex:1;
+    font-size:13px;
+    padding:8px;
+}
+
+.complete-btn{background:#22c55e;}
+.delete-btn{background:#ef4444;}
+.clear-btn{
+    background:#475569;
+    margin-top:15px;
+}
+
+footer{
+    text-align:center;
+    padding:20px;
+    color:var(--muted);
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>Task Scheduler</h1>
+    <p>Organize • Prioritize • Achieve</p>
+</header>
+
+<div class="container">
+
+    <input type="text" id="taskName" placeholder="Task name">
+    <input type="date" id="taskDate">
+    <input type="time" id="taskTime">
+
+    <select id="taskPriority">
+        <option value="high">High Priority</option>
+        <option value="medium">Medium Priority</option>
+        <option value="low">Low Priority</option>
+    </select>
+
+    <input type="text" id="taskCategory" placeholder="Category (Study, Work, Personal)">
+    <button onclick="addTask()">Add Task</button>
+
+    <input type="text" id="search" placeholder="Search tasks..." onkeyup="renderTasks()">
+
+    <div class="stats">
+        <span id="total"></span>
+        <span id="completed"></span>
+        <span id="pending"></span>
+    </div>
+
+    <div id="taskList"></div>
+
+    <button class="clear-btn" onclick="clearAll()">Clear All Tasks</button>
+</div>
+
+<footer>
+    <p>Task Scheduler • Web Project</p>
+</footer>
+
+<script>
+let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+
+function saveTasks(){
+    localStorage.setItem("tasks", JSON.stringify(tasks));
+}
+
+function renderTasks(){
+    const list = document.getElementById("taskList");
+    const search = document.getElementById("search").value.toLowerCase();
+    list.innerHTML = "";
+
+    let completed = 0;
+
+    tasks.filter(t => t.name.toLowerCase().includes(search))
+    .forEach((task,index)=>{
+        if(task.done) completed++;
+
+        const div = document.createElement("div");
+        div.className = `task priority-${task.priority}` + (task.done ? " completed" : "");
+
+        div.innerHTML = `
+            <strong>${task.name}</strong> (${task.category})<br>
+            📅 ${task.date} ⏰ ${task.time} | Priority: ${task.priority}
+
+            <div class="task-buttons">
+                <button class="complete-btn" onclick="toggleTask(${index})">
+                    ${task.done ? "Undo" : "Complete"}
+                </button>
+                <button class="delete-btn" onclick="deleteTask(${index})">
+                    Delete
+                </button>
+            </div>
+        `;
+        list.appendChild(div);
+    });
+
+    document.getElementById("total").innerText = `Total: ${tasks.length}`;
+    document.getElementById("completed").innerText = `Completed: ${completed}`;
+    document.getElementById("pending").innerText = `Pending: ${tasks.length - completed}`;
+}
+
+function addTask(){
+    const name = taskName.value;
+    const date = taskDate.value;
+    const time = taskTime.value;
+    const priority = taskPriority.value;
+    const category = taskCategory.value || "General";
+
+    if(!name || !date || !time){
+        alert("Please fill all required fields");
+        return;
+    }
+
+    tasks.push({name,date,time,priority,category,done:false});
+    saveTasks();
+    renderTasks();
+
+    taskName.value="";
+    taskDate.value="";
+    taskTime.value="";
+    taskCategory.value="";
+}
+
+function deleteTask(index){
+    tasks.splice(index,1);
+    saveTasks();
+    renderTasks();
+}
+
+function toggleTask(index){
+    tasks[index].done = !tasks[index].done;
+    saveTasks();
+    renderTasks();
+}
+
+function clearAll(){
+    if(confirm("Are you sure you want to clear all tasks?")){
+        tasks=[];
+        saveTasks();
+        renderTasks();
+    }
+}
+
+renderTasks();
+</script>
+
+</body>
+</html>
